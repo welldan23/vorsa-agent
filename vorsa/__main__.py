@@ -8,9 +8,10 @@
 import asyncio
 import logging
 import re
+import sqlite3
 import sys
 
-from vorsa.config import load_settings
+from vorsa.config import Settings, load_settings
 
 
 def preview() -> None:
@@ -25,25 +26,23 @@ def preview() -> None:
         print("  ".join(f"[ {btn.text} ]" for btn in row))
 
 
-async def run_bot(token: str) -> None:
+async def run_bot(settings: Settings, db: sqlite3.Connection) -> None:
     from vorsa.bot import create_bot, create_dispatcher, register_commands
 
-    bot = create_bot(token)
-    dp = create_dispatcher()
+    bot = create_bot(settings.bot_token)
+    dp = create_dispatcher(db, settings)
     await register_commands(bot)
     await dp.start_polling(bot)
 
 
-def migrate(database_path: str) -> None:
+def open_database(database_path: str) -> sqlite3.Connection:
     from vorsa.db.connection import connect
     from vorsa.db.migrate import apply_migrations
 
     conn = connect(database_path)
-    try:
-        version = apply_migrations(conn)
-    finally:
-        conn.close()
+    version = apply_migrations(conn)
     logging.info("Database %s siap (skema versi %d)", database_path, version)
+    return conn
 
 
 def main() -> None:
@@ -53,12 +52,15 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
     settings = load_settings()
-    migrate(settings.database_path)
-    if "--migrate" in sys.argv:
-        return
-    if not settings.bot_token:
-        sys.exit("BOT_TOKEN belum diisi. Salin .env.example jadi .env lalu isi token dari @BotFather.")
-    asyncio.run(run_bot(settings.bot_token))
+    db = open_database(settings.database_path)
+    try:
+        if "--migrate" in sys.argv:
+            return
+        if not settings.bot_token:
+            sys.exit("BOT_TOKEN belum diisi. Salin .env.example jadi .env lalu isi token dari @BotFather.")
+        asyncio.run(run_bot(settings, db))
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

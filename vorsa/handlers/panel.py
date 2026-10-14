@@ -1,9 +1,12 @@
 """Handler Panel Utama: /start, /panel, menu perintah, dan tombol navigasinya."""
 
+import sqlite3
+
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
+from vorsa.config import Settings
 from vorsa.handlers.common import NO_PREVIEW, edit_view
 from vorsa.keyboards.monitor import monitor_keyboard
 from vorsa.keyboards.panel import (
@@ -13,11 +16,11 @@ from vorsa.keyboards.panel import (
     section_keyboard,
 )
 from vorsa.menu import PANEL_COMMAND
+from vorsa.services.panel import get_panel_snapshot
 from vorsa.stub.mock_data import (
     get_important_articles,
     get_monitor_overview,
     get_monitoring_status,
-    get_panel_snapshot,
     get_recent_activity,
 )
 from vorsa.ui.activity import render_activity_list
@@ -30,15 +33,15 @@ from vorsa.ui.status import render_monitoring_status
 router = Router(name="panel")
 
 
+def _panel_text(db: sqlite3.Connection, settings: Settings, user_name: str | None) -> str:
+    return render_main_panel(get_panel_snapshot(db, settings.check_interval_minutes), user_name)
+
 
 @router.message(CommandStart())
 @router.message(Command(PANEL_COMMAND[0], "menu"))
-async def show_panel(message: Message) -> None:
+async def show_panel(message: Message, db: sqlite3.Connection, settings: Settings) -> None:
     name = message.from_user.first_name if message.from_user else None
-    await message.answer(
-        render_main_panel(get_panel_snapshot(), name),
-        reply_markup=main_panel_keyboard(),
-    )
+    await message.answer(_panel_text(db, settings, name), reply_markup=main_panel_keyboard())
 
 
 @router.message(Command("bantuan", "help"))
@@ -77,9 +80,8 @@ async def show_monitor(message: Message) -> None:
 
 
 @router.callback_query(PanelAction.filter(F.section == "home"))
-async def refresh_panel(query: CallbackQuery) -> None:
-    text = render_main_panel(get_panel_snapshot(), query.from_user.first_name)
-    await edit_view(query, text, main_panel_keyboard())
+async def refresh_panel(query: CallbackQuery, db: sqlite3.Connection, settings: Settings) -> None:
+    await edit_view(query, _panel_text(db, settings, query.from_user.first_name), main_panel_keyboard())
     await query.answer("Panel diperbarui")
 
 
