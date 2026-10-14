@@ -1,4 +1,9 @@
-"""Titik masuk: `python -m vorsa` (bot) atau `python -m vorsa --preview` (cetak panel di terminal)."""
+"""Titik masuk.
+
+    python -m vorsa            jalankan bot
+    python -m vorsa --preview  cetak Panel Utama di terminal (tanpa token)
+    python -m vorsa --migrate  siapkan/perbarui database saja
+"""
 
 import asyncio
 import logging
@@ -29,6 +34,18 @@ async def run_bot(token: str) -> None:
     await dp.start_polling(bot)
 
 
+def migrate(database_path: str) -> None:
+    from vorsa.db.connection import connect
+    from vorsa.db.migrate import apply_migrations
+
+    conn = connect(database_path)
+    try:
+        version = apply_migrations(conn)
+    finally:
+        conn.close()
+    logging.info("Database %s siap (skema versi %d)", database_path, version)
+
+
 def main() -> None:
     if "--preview" in sys.argv:
         preview()
@@ -36,6 +53,9 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
     settings = load_settings()
+    migrate(settings.database_path)
+    if "--migrate" in sys.argv:
+        return
     if not settings.bot_token:
         sys.exit("BOT_TOKEN belum diisi. Salin .env.example jadi .env lalu isi token dari @BotFather.")
     asyncio.run(run_bot(settings.bot_token))

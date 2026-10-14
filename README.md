@@ -12,7 +12,15 @@ cp .env.example .env        # isi BOT_TOKEN dari @BotFather
 .venv/bin/python -m vorsa
 ```
 
-Lalu kirim `/start` ke bot kamu di Telegram.
+Lalu kirim `/start` ke bot kamu di Telegram. Database SQLite (`data/vorsa.sqlite3`) dibuat
+dan diperbarui otomatis saat bot menyala; bisa juga manual dengan `.venv/bin/python -m vorsa --migrate`.
+
+## Tes
+
+```bash
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python -m pytest
+```
 
 Mau lihat tampilan Panel Utama tanpa token? Jalankan:
 
@@ -45,3 +53,4 @@ Mau lihat tampilan Panel Utama tanpa token? Jalankan:
 | `vorsa/keyboards/` | Tombol inline |
 | `vorsa/ui/` | Teks/tampilan pesan |
 | `vorsa/stub/` | Data tiruan sebelum backend jadi |
+| `vorsa/db/` | Koneksi SQLite & migrasi skema (`migrations/NNN_nama.sql`) |
