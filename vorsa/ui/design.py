@@ -62,3 +62,21 @@ def render_design_draft(d: DesignDraft) -> str:
     if tags:
         lines += ["", tags]
     return "\n".join(lines)
+
+
+PREVIEW_CAPTION_MAX = 1024  # batas caption foto Telegram
+
+
+def render_preview_caption(d: DesignDraft) -> str:
+    """Caption kartu pratinjau: ringkas, karena caption foto Telegram maks 1024 karakter."""
+    caption = d.caption if len(d.caption) <= 400 else d.caption[:399].rstrip() + "…"
+    text = "\n".join(
+        [
+            f"🖼 <b>Pratinjau Desain</b> · versi {d.version} · {STATUS_LABELS.get(d.status, escape(d.status))}",
+            "",
+            escape(caption),
+            "",
+            " ".join(f"#{escape(t)}" for t in d.hashtags),
+        ]
+    ).rstrip()
+    return text[:PREVIEW_CAPTION_MAX]

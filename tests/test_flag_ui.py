@@ -50,5 +50,5 @@ def test_design_button_opens_design_chat(tg):
     buttons = [b.text for r in tg.calls[-1].reply_markup.inline_keyboard for b in r]
     assert buttons == ["🖼 Lihat Pratinjau", "🔁 Buat Ulang", "⬅️ Kembali ke Berita"]
 
-    run(tg.press("dsg:preview:0"))
+    run(tg.press("dsg:regenerate:0"))
     assert toasts(tg)[-1] == "Bagian ini sedang disiapkan 🙏"

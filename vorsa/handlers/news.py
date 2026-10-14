@@ -2,14 +2,20 @@
 
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import BufferedInputFile, CallbackQuery, Message
 
 from vorsa.handlers.common import edit_view
 from vorsa.handlers.design_progress import DesignProgress, run_demo_steps
 from vorsa.keyboards.news import ArticleAction, flag_confirm_keyboard, notification_keyboard, score_keyboard
-from vorsa.keyboards.design import design_keyboard
-from vorsa.stub.samples import sample_design, sample_notification, sample_score_detail, set_sample_flag
-from vorsa.ui.design import render_design_draft
+from vorsa.keyboards.design import DesignAction, design_keyboard, preview_keyboard
+from vorsa.stub.samples import (
+    sample_design,
+    sample_design_image,
+    sample_notification,
+    sample_score_detail,
+    set_sample_flag,
+)
+from vorsa.ui.design import render_design_draft, render_preview_caption
 from vorsa.ui.notification import render_flag_confirmation, render_notification
 from vorsa.ui.score import render_score_detail
 
@@ -58,3 +64,26 @@ async def start_design(query: CallbackQuery) -> None:
     design = sample_design()
     await run_demo_steps(DesignProgress(query, design.article_title))
     await edit_view(query, render_design_draft(design), design_keyboard(design.id, design.article_id))
+
+
+@router.callback_query(DesignAction.filter((F.action == "preview") & (F.id == 0)))
+async def preview_design(query: CallbackQuery) -> None:
+    design = sample_design()
+    await query.answer()
+    await query.bot.send_photo(
+        chat_id=query.message.chat.id,
+        photo=BufferedInputFile(sample_design_image(design.headline), filename="vorsa-pratinjau.png"),
+        caption=render_preview_caption(design),
+        reply_markup=preview_keyboard(design.id),
+    )
+
+
+@router.callback_query(DesignAction.filter((F.action == "open") & (F.id == 0)))
+async def open_design_chat(query: CallbackQuery) -> None:
+    design = sample_design()
+    await query.answer()
+    await query.bot.send_message(
+        chat_id=query.message.chat.id,
+        text=render_design_draft(design),
+        reply_markup=design_keyboard(design.id, design.article_id),
+    )
