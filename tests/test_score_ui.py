@@ -26,3 +26,12 @@ def test_score_button_round_trip(tg):
     score, card = tg.texts()
     assert "📊 Skor Kepentingan" in score
     assert "🔔 <b>Berita Penting</b>" in card
+
+
+def test_design_progress_steps():
+    from vorsa.ui.design import render_design_progress
+
+    start = render_design_progress("Judul", 0)
+    assert "⏳ Membaca isi berita" in start and "0/4 langkah" in start
+    finished = render_design_progress("Judul", 4)
+    assert finished.count("✅") == 4 and "4/4 langkah" in finished

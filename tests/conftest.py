@@ -77,4 +77,7 @@ class FakeTelegram:
 
 @pytest.fixture
 def tg(db, monkeypatch):
+    from vorsa.handlers import design_progress
+
+    monkeypatch.setattr(design_progress, "DEMO_STEP_DELAY", 0)
     return FakeTelegram(db, monkeypatch)

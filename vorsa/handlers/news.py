@@ -5,10 +5,11 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from vorsa.handlers.common import edit_view
+from vorsa.handlers.design_progress import DesignProgress, run_demo_steps
 from vorsa.keyboards.news import ArticleAction, flag_confirm_keyboard, notification_keyboard, score_keyboard
 from vorsa.keyboards.design import design_keyboard
 from vorsa.stub.samples import sample_design, sample_notification, sample_score_detail, set_sample_flag
-from vorsa.ui.design import render_design_draft, render_design_progress
+from vorsa.ui.design import render_design_draft
 from vorsa.ui.notification import render_flag_confirmation, render_notification
 from vorsa.ui.score import render_score_detail
 
@@ -55,5 +56,5 @@ async def unflag(query: CallbackQuery) -> None:
 async def start_design(query: CallbackQuery) -> None:
     await query.answer("🎨 Mulai bikin desain…")
     design = sample_design()
-    await edit_view(query, render_design_progress(design.article_title), None)
+    await run_demo_steps(DesignProgress(query, design.article_title))
     await edit_view(query, render_design_draft(design), design_keyboard(design.id, design.article_id))

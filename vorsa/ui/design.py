@@ -26,12 +26,24 @@ class DesignDraft:
     created_at: datetime
 
 
-def render_design_progress(article_title: str) -> str:
-    return (
-        "🎨 <b>Lagi bikin desain VORSA…</b>\n\n"
-        f"<i>{escape(article_title)}</i>\n\n"
-        "Menyusun judul, caption, dan tata letak. Biasanya kurang dari satu menit."
-    )
+# Langkah pembuatan desain, urut. Backend melapor langkah ke berapa yang sedang jalan.
+DESIGN_STEPS = [
+    "Membaca isi berita",
+    "Menulis judul & caption",
+    "Menyusun tata letak VORSA",
+    "Merender gambar",
+]
+
+
+def render_design_progress(article_title: str, step: int = 0) -> str:
+    """step = indeks langkah yang sedang dikerjakan (len(DESIGN_STEPS) = semua selesai)."""
+    lines = ["🎨 <b>Lagi bikin desain VORSA…</b>", f"<i>{escape(article_title)}</i>", ""]
+    for i, name in enumerate(DESIGN_STEPS):
+        icon = "✅" if i < step else "⏳" if i == step else "▫️"
+        lines.append(f"{icon} {escape(name)}")
+    done = min(step, len(DESIGN_STEPS))
+    lines += ["", f"<i>{done}/{len(DESIGN_STEPS)} langkah · biasanya kurang dari satu menit</i>"]
+    return "\n".join(lines)
 
 
 def render_design_draft(d: DesignDraft) -> str:

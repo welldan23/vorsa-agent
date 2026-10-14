@@ -40,8 +40,11 @@ def test_flag_then_later_then_unflag(tg):
 
 def test_design_button_opens_design_chat(tg):
     run(tg.press("art:design:0"))
-    progress, draft = tg.texts()
-    assert "Lagi bikin desain VORSA" in progress
+    *steps, draft = tg.texts()
+    assert len(steps) == 4 and all("Lagi bikin desain VORSA" in t for t in steps)
+    assert "✅ Membaca isi berita\n⏳ Menulis judul &amp; caption\n▫️ Menyusun" in steps[1]
+    actions = [c for c in tg.calls if type(c).__name__ == "SendChatAction"]
+    assert len(actions) == 4 and actions[0].action == "upload_photo"
     assert "🎨 <b>Desain VORSA</b> · versi 1 · 📝 Draf" in draft
     assert "<b>Caption Instagram</b>" in draft and "#VORSA #emas" in draft
     buttons = [b.text for r in tg.calls[-1].reply_markup.inline_keyboard for b in r]
