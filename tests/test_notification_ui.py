@@ -33,5 +33,4 @@ def test_keyboard_switches_when_flagged():
 def test_demo_command(tg):
     asyncio.run(tg.send("/contoh_notif"))
     assert "🔔 <b>Berita Penting</b>" in tg.texts()[0]
-    asyncio.run(tg.press("art:flag:0"))
-    assert tg.calls[-1].text == "Bagian ini sedang disiapkan 🙏"
+    assert tg.calls[0].reply_markup.inline_keyboard[0][0].text == "📌 Tandai untuk Diolah"

@@ -1,12 +1,24 @@
 """Contoh data untuk tampilan yang backend-nya belum ada (fase 2)."""
 
+from dataclasses import replace
 from datetime import datetime, timedelta
 
 from vorsa.ui.notification import ArticleNotification
 from vorsa.ui.score import ScoreDetail
 
 
+_flagged: set[int] = set()  # status tandai berita contoh selama bot jalan
+
+
+def set_sample_flag(flagged: bool) -> None:
+    (_flagged.add if flagged else _flagged.discard)(0)
+
+
 def sample_notification() -> ArticleNotification:
+    return _sample_notification() if 0 not in _flagged else replace(_sample_notification(), is_flagged=True)
+
+
+def _sample_notification() -> ArticleNotification:
     return ArticleNotification(
         id=0,
         title="Harga emas tembus rekor baru, investor ramai beralih ke logam mulia",

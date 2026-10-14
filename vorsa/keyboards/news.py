@@ -8,7 +8,7 @@ from vorsa.ui.notification import ArticleNotification
 
 
 class ArticleAction(CallbackData, prefix="art"):
-    action: str  # flag | unflag | ignore | score | card
+    action: str  # flag | unflag | ignore | score | card | design
     id: int
 
 
@@ -28,4 +28,13 @@ def notification_keyboard(n: ArticleNotification) -> InlineKeyboardMarkup:
 def score_keyboard(article_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="⬅️ Kembali ke Berita", callback_data=ArticleAction(action="card", id=article_id))
+    return kb.as_markup()
+
+
+def flag_confirm_keyboard(article_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🎨 Buat Desain Sekarang", callback_data=ArticleAction(action="design", id=article_id))
+    kb.button(text="⏰ Nanti Saja", callback_data=ArticleAction(action="card", id=article_id))
+    kb.button(text="↩️ Batal Tandai", callback_data=ArticleAction(action="unflag", id=article_id))
+    kb.adjust(1, 2)
     return kb.as_markup()

@@ -42,3 +42,17 @@ def render_notification(n: ArticleNotification) -> str:
     if n.is_flagged:
         lines += ["", "📌 <b>Sudah ditandai untuk diolah</b>"]
     return "\n".join(lines)
+
+
+def render_flag_confirmation(n: ArticleNotification) -> str:
+    return "\n".join(
+        [
+            "📌 <b>Berita ditandai untuk diolah</b>",
+            "",
+            f"<b>{escape(n.title)}</b>",
+            f"<i>{escape(n.category)} · {escape(n.source)}</i>",
+            "",
+            "Mau langsung dibuatkan desain VORSA sekarang?",
+            "<i>Kalau nanti, berita ini tetap tersimpan di daftar yang ditandai.</i>",
+        ]
+    )

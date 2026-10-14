@@ -5,9 +5,9 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from vorsa.handlers.common import edit_view
-from vorsa.keyboards.news import ArticleAction, notification_keyboard, score_keyboard
-from vorsa.stub.samples import sample_notification, sample_score_detail
-from vorsa.ui.notification import render_notification
+from vorsa.keyboards.news import ArticleAction, flag_confirm_keyboard, notification_keyboard, score_keyboard
+from vorsa.stub.samples import sample_notification, sample_score_detail, set_sample_flag
+from vorsa.ui.notification import render_flag_confirmation, render_notification
 from vorsa.ui.score import render_score_detail
 
 router = Router(name="news")
@@ -32,3 +32,18 @@ async def back_to_card(query: CallbackQuery) -> None:
     n = sample_notification()
     await edit_view(query, render_notification(n), notification_keyboard(n))
     await query.answer()
+
+
+@router.callback_query(ArticleAction.filter((F.action == "flag") & (F.id == 0)))
+async def flag(query: CallbackQuery) -> None:
+    set_sample_flag(True)
+    await edit_view(query, render_flag_confirmation(sample_notification()), flag_confirm_keyboard(0))
+    await query.answer("📌 Ditandai")
+
+
+@router.callback_query(ArticleAction.filter((F.action == "unflag") & (F.id == 0)))
+async def unflag(query: CallbackQuery) -> None:
+    set_sample_flag(False)
+    n = sample_notification()
+    await edit_view(query, render_notification(n), notification_keyboard(n))
+    await query.answer("Tanda dibatalkan")
