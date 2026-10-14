@@ -45,10 +45,10 @@ def test_design_button_opens_design_chat(tg):
     assert "✅ Membaca isi berita\n⏳ Menulis judul &amp; caption\n▫️ Menyusun" in steps[1]
     actions = [c for c in tg.calls if type(c).__name__ == "SendChatAction"]
     assert len(actions) == 4 and actions[0].action == "upload_photo"
-    assert "🎨 <b>Desain VORSA</b> · versi 1 · 📝 Draf" in draft
+    assert "🎨 <b>Desain VORSA</b> · versi 3 · 📝 Draf" in draft
     assert "<b>Caption Instagram</b>" in draft and "#VORSA #emas" in draft
     buttons = [b.text for r in tg.calls[-1].reply_markup.inline_keyboard for b in r]
-    assert buttons == ["🖼 Lihat Pratinjau", "🔁 Buat Ulang", "⬅️ Kembali ke Berita"]
+    assert buttons == ["🖼 Lihat Pratinjau", "🔁 Buat Ulang", "🕘 Riwayat Versi", "⬅️ Kembali ke Berita"]
 
     run(tg.press("dsg:regenerate:0"))
     assert toasts(tg)[-1] == "Bagian ini sedang disiapkan 🙏"

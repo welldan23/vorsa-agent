@@ -7,15 +7,17 @@ from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from vorsa.handlers.common import edit_view
 from vorsa.handlers.design_progress import DesignProgress, run_demo_steps
 from vorsa.keyboards.news import ArticleAction, flag_confirm_keyboard, notification_keyboard, score_keyboard
-from vorsa.keyboards.design import DesignAction, design_keyboard, preview_keyboard
+from vorsa.keyboards.design import DesignAction, design_keyboard, history_keyboard, preview_keyboard
 from vorsa.stub.samples import (
     sample_design,
+    sample_design_by_id,
     sample_design_image,
+    sample_design_versions,
     sample_notification,
     sample_score_detail,
     set_sample_flag,
 )
-from vorsa.ui.design import render_design_draft, render_preview_caption
+from vorsa.ui.design import render_design_draft, render_preview_caption, render_version_history
 from vorsa.ui.notification import render_flag_confirmation, render_notification
 from vorsa.ui.score import render_score_detail
 
@@ -66,9 +68,12 @@ async def start_design(query: CallbackQuery) -> None:
     await edit_view(query, render_design_draft(design), design_keyboard(design.id, design.article_id))
 
 
-@router.callback_query(DesignAction.filter((F.action == "preview") & (F.id == 0)))
-async def preview_design(query: CallbackQuery) -> None:
-    design = sample_design()
+SAMPLE_DESIGN_IDS = {d.id for d in sample_design_versions()}
+
+
+@router.callback_query(DesignAction.filter((F.action == "preview") & F.id.in_(SAMPLE_DESIGN_IDS)))
+async def preview_design(query: CallbackQuery, callback_data: DesignAction) -> None:
+    design = sample_design_by_id(callback_data.id)
     await query.answer()
     await query.bot.send_photo(
         chat_id=query.message.chat.id,
@@ -87,3 +92,10 @@ async def open_design_chat(query: CallbackQuery) -> None:
         text=render_design_draft(design),
         reply_markup=design_keyboard(design.id, design.article_id),
     )
+
+
+@router.callback_query(DesignAction.filter((F.action == "history") & (F.id == 0)))
+async def design_history(query: CallbackQuery) -> None:
+    versions = sample_design_versions()
+    await edit_view(query, render_version_history(versions), history_keyboard(versions, 0))
+    await query.answer()

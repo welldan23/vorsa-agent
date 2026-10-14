@@ -80,3 +80,19 @@ def render_preview_caption(d: DesignDraft) -> str:
         ]
     ).rstrip()
     return text[:PREVIEW_CAPTION_MAX]
+
+
+def render_version_history(versions: list[DesignDraft]) -> str:
+    """versions: terbaru dulu."""
+    if not versions:
+        return "<b>🕘 Riwayat Versi</b>\n\nBelum ada desain."
+    lines = ["<b>🕘 Riwayat Versi</b>", f"<i>{escape(versions[0].article_title)}</i>", ""]
+    for i, d in enumerate(versions):
+        mark = " · <b>terbaru</b>" if i == 0 else ""
+        lines += [
+            f"<b>v{d.version}</b> · {d.created_at:%H:%M} · {STATUS_LABELS.get(d.status, escape(d.status))}{mark}",
+            f"“{escape(d.headline)}”",
+            "",
+        ]
+    lines.append("<i>Tekan versi untuk melihat pratinjaunya.</i>")
+    return "\n".join(lines)

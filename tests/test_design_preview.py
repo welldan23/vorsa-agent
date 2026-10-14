@@ -17,7 +17,7 @@ def test_preview_caption_fits_telegram_limit():
     long = replace(sample_design(), caption="kata " * 500)
     text = render_preview_caption(long)
     assert len(text) <= 1024 and "…" in text
-    assert render_preview_caption(sample_design()).startswith("🖼 <b>Pratinjau Desain</b> · versi 1")
+    assert render_preview_caption(sample_design()).startswith("🖼 <b>Pratinjau Desain</b> · versi 3")
 
 
 def test_preview_button_sends_photo(tg):
@@ -28,3 +28,22 @@ def test_preview_button_sends_photo(tg):
 
     asyncio.run(tg.press("dsg:open:0"))
     assert "<b>Caption Instagram</b>" in tg.texts()[-1]
+
+
+def test_version_history(tg):
+    asyncio.run(tg.press("dsg:history:0"))
+    text = tg.texts()[0]
+    assert "<b>v3</b>" in text and "· <b>terbaru</b>" in text
+    assert text.index("v3") < text.index("v2") < text.index("v1")
+    buttons = [b.text for r in tg.calls[0].reply_markup.inline_keyboard for b in r]
+    assert buttons == ["🖼 v3", "🖼 v2", "🖼 v1", "⬅️ Kembali ke Desain"]
+
+    asyncio.run(tg.press("dsg:preview:101"))
+    photo = next(c for c in tg.calls if type(c).__name__ == "SendPhoto")
+    assert "versi 1" in photo.caption
+
+
+def test_empty_history():
+    from vorsa.ui.design import render_version_history
+
+    assert "Belum ada desain" in render_version_history([])

@@ -60,7 +60,7 @@ def sample_design() -> DesignDraft:
         article_id=n.id,
         article_title=n.title,
         category=n.category,
-        version=1,
+        version=3,
         status="draft",
         headline="EMAS PECAH REKOR. SAATNYA IKUT BELI?",
         caption=(
@@ -88,3 +88,29 @@ def sample_design_image(headline: str) -> bytes:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
+
+
+def sample_design_versions() -> list[DesignDraft]:
+    """Riwayat versi desain contoh, terbaru dulu. Versi terbaru = sample_design()."""
+    latest = replace(sample_design(), version=3)
+    return [
+        latest,
+        replace(
+            latest,
+            id=102,
+            version=2,
+            headline="EMAS NAIK TERUS, KAMU UDAH PUNYA?",
+            created_at=latest.created_at - timedelta(minutes=9),
+        ),
+        replace(
+            latest,
+            id=101,
+            version=1,
+            headline="HARGA EMAS TEMBUS REKOR BARU",
+            created_at=latest.created_at - timedelta(minutes=21),
+        ),
+    ]
+
+
+def sample_design_by_id(design_id: int) -> DesignDraft | None:
+    return next((d for d in sample_design_versions() if d.id == design_id), None)
