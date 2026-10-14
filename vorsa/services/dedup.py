@@ -9,6 +9,7 @@ import hashlib
 import re
 import sqlite3
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -49,13 +50,34 @@ def content_hash(title: str) -> str:
     return hashlib.sha256(normalize_title(title).encode()).hexdigest()
 
 
+# Satu link dipakai sebanyak ini judul berbeda dalam satu feed → bukan link berita.
+# (2 judul untuk 1 link masih wajar: berita yang judulnya diperbarui.)
+SHARED_LINK_TITLES = 3
+
+
+def _article_links(entries: list[FeedEntry]) -> list[str]:
+    """Link per entri. Ada feed (mis. Google Trends) yang memberi link SAMA untuk semua
+    entrinya, atau hanya link halaman depan; link seperti itu bukan identitas berita,
+    jadi dibuat unik per judul (deduplikasi lalu bergantung pada judul)."""
+    links = [normalize_link(e.link) for e in entries]
+    distinct_titles = Counter(link for link, _ in {(l, content_hash(e.title)) for l, e in zip(links, entries)})
+
+    def is_identity(link: str) -> bool:
+        return distinct_titles[link] < SHARED_LINK_TITLES and urlsplit(link).path != "/"
+
+    return [
+        link if is_identity(link) else f"{link}#{content_hash(e.title)[:12]}"
+        for link, e in zip(links, entries)
+    ]
+
+
 def store_entries(
     conn: sqlite3.Connection, source_id: int, category_id: int, entries: list[FeedEntry]
 ) -> StoreResult:
     """Simpan entri yang belum pernah ada; mengembalikan jumlah baru & kembar."""
     new = 0
     with conn:
-        for entry in entries:
+        for entry, link in zip(entries, _article_links(entries)):
             cur = conn.execute(
                 """
                 INSERT OR IGNORE INTO articles
@@ -66,7 +88,7 @@ def store_entries(
                     source_id,
                     category_id,
                     entry.title,
-                    normalize_link(entry.link),
+                    link,
                     entry.summary,
                     content_hash(entry.title),
                     to_db(entry.published_at) if entry.published_at else None,

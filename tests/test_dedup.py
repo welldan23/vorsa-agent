@@ -60,3 +60,30 @@ def test_store_skips_duplicates_within_and_across_runs(db):
 def test_store_empty(db):
     seed(db)
     assert store_entries(db, 1, 1, []) == store_entries(db, 1, 1, [])
+
+
+def test_feed_with_one_link_for_all_entries(db):
+    """Google Trends memberi link feed yang sama untuk setiap tren."""
+    seed(db)
+    feed_link = "https://trends.google.com/trending/rss?geo=ID"
+    batch = [entry("sarwendah tan", feed_link), entry("ray dalio", feed_link), entry("jadwal persib", feed_link)]
+
+    assert store_entries(db, 1, 1, batch).new == 3
+    links = [r[0] for r in db.execute("SELECT link FROM articles")]
+    assert len(set(links)) == 3 and all(link.startswith(feed_link + "#") for link in links)
+
+    # putaran berikutnya: tren lama kembar, tren baru masuk
+    again = store_entries(db, 1, 1, [entry("ray dalio", feed_link), entry("timnas", feed_link)])
+    assert (again.new, again.duplicates) == (1, 1)
+
+
+def test_same_link_same_title_in_one_batch_is_still_duplicate(db):
+    seed(db)
+    batch = [entry("Emas naik", "https://a.id/emas"), entry("Emas naik", "https://a.id/emas")]
+    assert store_entries(db, 1, 1, batch).duplicates == 1
+
+
+def test_homepage_link_is_not_an_identity(db):
+    seed(db)
+    batch = [entry("Satu", "https://situs.id/"), entry("Dua", "https://situs.id")]
+    assert store_entries(db, 1, 1, batch).new == 2
