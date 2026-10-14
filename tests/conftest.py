@@ -27,6 +27,7 @@ class FakeTelegram:
 
         from vorsa.bot import create_bot, create_dispatcher
         from vorsa.config import Settings
+        from vorsa.services.users import sync_owners
 
         self.calls = []
 
@@ -35,7 +36,10 @@ class FakeTelegram:
             return True
 
         monkeypatch.setattr(Bot, "__call__", fake_call)
-        self.settings = Settings(bot_token="123456:TEST", database_path=":memory:", check_interval_minutes=15)
+        self.settings = Settings(
+            bot_token="123456:TEST", database_path=":memory:", check_interval_minutes=15, owner_telegram_ids=("1",)
+        )
+        sync_owners(db, self.settings.owner_telegram_ids)  # pengguna tes (id 1) adalah pemilik
         self.bot = create_bot(self.settings.bot_token)
         global _DISPATCHER
         if _DISPATCHER is None:
@@ -46,6 +50,11 @@ class FakeTelegram:
         self.dp = _DISPATCHER
         self.user = User(id=1, is_bot=False, first_name="Wildan")
         self.chat = Chat(id=1, type="private")
+
+    def as_stranger(self, telegram_id=999):
+        """Kirim update berikutnya sebagai orang yang tidak terdaftar."""
+        self.user = User(id=telegram_id, is_bot=False, first_name="Orang Asing")
+        self.chat = Chat(id=telegram_id, type="private")
 
     async def send(self, text):
         msg = Message(message_id=1, date=datetime.now(), chat=self.chat, from_user=self.user, text=text)

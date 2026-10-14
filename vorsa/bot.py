@@ -10,6 +10,7 @@ from aiogram.types import BotCommand
 from vorsa.config import Settings
 from vorsa.handlers import build_router
 from vorsa.menu import MENU_ITEMS, PANEL_COMMAND
+from vorsa.middlewares.access import AccessMiddleware
 
 
 def create_bot(token: str) -> Bot:
@@ -19,6 +20,8 @@ def create_bot(token: str) -> Bot:
 def create_dispatcher(db: sqlite3.Connection, settings: Settings) -> Dispatcher:
     """`db` dan `settings` bisa diminta handler sebagai parameter bernama sama."""
     dp = Dispatcher(db=db, settings=settings)
+    dp.message.outer_middleware(AccessMiddleware())
+    dp.callback_query.outer_middleware(AccessMiddleware())
     dp.include_router(build_router())
     return dp
 

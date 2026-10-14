@@ -8,11 +8,15 @@ Semua dikendalikan lewat chat Telegram (tanpa dashboard web).
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-cp .env.example .env        # isi BOT_TOKEN dari @BotFather
+cp .env.example .env        # isi BOT_TOKEN dari @BotFather & OWNER_TELEGRAM_IDS
 .venv/bin/python -m vorsa
 ```
 
-Lalu kirim `/start` ke bot kamu di Telegram. Database SQLite (`data/vorsa.sqlite3`) dibuat
+Lalu kirim `/start` ke bot kamu di Telegram.
+
+Bot ini privat: hanya ID Telegram di `OWNER_TELEGRAM_IDS` yang dilayani. Belum tahu ID-mu?
+Kirim `/start` dulu — bot akan menolak sambil memberi tahu ID-mu. Masukkan ke `.env`, lalu
+nyalakan ulang bot. Database SQLite (`data/vorsa.sqlite3`) dibuat
 dan diperbarui otomatis saat bot menyala; bisa juga manual dengan `.venv/bin/python -m vorsa --migrate`.
 
 ## Tes

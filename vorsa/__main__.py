@@ -54,6 +54,11 @@ def main() -> None:
     settings = load_settings()
     db = open_database(settings.database_path)
     try:
+        from vorsa.services.users import sync_owners
+
+        sync_owners(db, settings.owner_telegram_ids)
+        if not settings.owner_telegram_ids:
+            logging.warning("OWNER_TELEGRAM_IDS kosong — semua orang akan ditolak. Kirim /start untuk tahu ID-mu.")
         if "--migrate" in sys.argv:
             return
         if not settings.bot_token:
