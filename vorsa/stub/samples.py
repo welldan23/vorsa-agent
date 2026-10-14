@@ -3,6 +3,7 @@
 from dataclasses import replace
 from datetime import datetime, timedelta
 
+from vorsa.ui.design import DesignDraft
 from vorsa.ui.notification import ArticleNotification
 from vorsa.ui.score import ScoreDetail
 
@@ -45,4 +46,25 @@ def sample_score_detail() -> ScoreDetail:
         threshold=0.70,
         criteria={"impact": 0.95, "novelty": 0.85, "audience_fit": 0.9, "virality": 0.88},
         reason=n.reason,
+    )
+
+
+def sample_design() -> DesignDraft:
+    n = _sample_notification()
+    return DesignDraft(
+        id=0,
+        article_id=n.id,
+        article_title=n.title,
+        category=n.category,
+        version=1,
+        status="draft",
+        headline="EMAS PECAH REKOR. SAATNYA IKUT BELI?",
+        caption=(
+            "Harga emas dunia baru aja tembus rekor tertinggi sepanjang masa 🟡\n\n"
+            "Pemicunya: sinyal bank sentral bakal pangkas suku bunga. Di dalam negeri, "
+            "antrean beli emas batangan juga makin panjang.\n\n"
+            "Kamu tim nabung emas atau tim nunggu turun? Tulis di komentar 👇"
+        ),
+        hashtags=["VORSA", "emas", "ekonomi", "investasi"],
+        created_at=datetime.now(),
     )

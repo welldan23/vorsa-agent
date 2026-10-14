@@ -38,6 +38,14 @@ def test_flag_then_later_then_unflag(tg):
     assert toasts(tg) == ["📌 Ditandai", None, "Tanda dibatalkan"]
 
 
-def test_design_button_pending(tg):
+def test_design_button_opens_design_chat(tg):
     run(tg.press("art:design:0"))
-    assert toasts(tg) == ["Bagian ini sedang disiapkan 🙏"]
+    progress, draft = tg.texts()
+    assert "Lagi bikin desain VORSA" in progress
+    assert "🎨 <b>Desain VORSA</b> · versi 1 · 📝 Draf" in draft
+    assert "<b>Caption Instagram</b>" in draft and "#VORSA #emas" in draft
+    buttons = [b.text for r in tg.calls[-1].reply_markup.inline_keyboard for b in r]
+    assert buttons == ["🖼 Lihat Pratinjau", "🔁 Buat Ulang", "⬅️ Kembali ke Berita"]
+
+    run(tg.press("dsg:preview:0"))
+    assert toasts(tg)[-1] == "Bagian ini sedang disiapkan 🙏"
