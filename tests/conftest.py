@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Chat, Message, Update, User
 
 from vorsa.db.connection import connect
@@ -30,9 +31,12 @@ class FakeTelegram:
         from vorsa.services.users import sync_owners
 
         self.calls = []
+        self.edit_error = None  # isi pesan error untuk mensimulasikan edit yang ditolak Telegram
 
         async def fake_call(bot, method, request_timeout=None):
             self.calls.append(method)
+            if self.edit_error and type(method).__name__ == "EditMessageText":
+                raise TelegramBadRequest(method=method, message=self.edit_error)
             return True
 
         monkeypatch.setattr(Bot, "__call__", fake_call)
@@ -60,8 +64,8 @@ class FakeTelegram:
         msg = Message(message_id=1, date=datetime.now(), chat=self.chat, from_user=self.user, text=text)
         await self.dp.feed_update(self.bot, Update(update_id=1, message=msg))
 
-    async def press(self, data):
-        old = Message(message_id=2, date=datetime.now(), chat=self.chat, text="old")
+    async def press(self, data, message=None):
+        old = message or Message(message_id=2, date=datetime.now(), chat=self.chat, text="old")
         query = CallbackQuery(id="q", from_user=self.user, chat_instance="c", data=data, message=old)
         await self.dp.feed_update(self.bot, Update(update_id=2, callback_query=query))
 

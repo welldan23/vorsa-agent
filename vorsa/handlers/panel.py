@@ -13,7 +13,7 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from vorsa.config import Settings
-from vorsa.handlers.common import NO_PREVIEW, edit_view
+from vorsa.handlers.common import NO_PREVIEW, EditResult, edit_view
 from vorsa.keyboards.monitor import monitor_keyboard
 from vorsa.keyboards.panel import (
     PanelAction,
@@ -76,8 +76,8 @@ async def section_command(
 
 @router.callback_query(PanelAction.filter(F.section == "home"))
 async def refresh_panel(query: CallbackQuery, db: sqlite3.Connection, settings: Settings) -> None:
-    await edit_view(query, _panel_text(db, settings, query.from_user.first_name), main_panel_keyboard())
-    await query.answer("Panel diperbarui")
+    result = await edit_view(query, _panel_text(db, settings, query.from_user.first_name), main_panel_keyboard())
+    await query.answer("Panel sudah paling baru ✅" if result is EditResult.UNCHANGED else "Panel diperbarui 🔄")
 
 
 @router.callback_query(PanelAction.filter(F.section.in_(SECTION_VIEWS)))

@@ -44,6 +44,6 @@ def render_main_panel(snap: PanelSnapshot, user_name: str | None = None) -> str:
             "🕘 <b>Aktivitas Terakhir</b>",
             activity,
             DIVIDER,
-            f"<i>Diperbarui {_fmt_time(snap.generated_at)} · pilih menu di bawah</i>",
+            f"<i>Diperbarui {snap.generated_at:%H:%M:%S} · pilih menu di bawah</i>",
         ]
     )
