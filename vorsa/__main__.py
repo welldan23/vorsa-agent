@@ -28,11 +28,21 @@ def preview() -> None:
 
 async def run_bot(settings: Settings, db: sqlite3.Connection) -> None:
     from vorsa.bot import create_bot, create_dispatcher, register_commands
+    from vorsa.scheduler import create_scheduler
+    from vorsa.services.check_run import recover_interrupted_runs
 
     bot = create_bot(settings.bot_token)
     dp = create_dispatcher(db, settings)
     await register_commands(bot)
-    await dp.start_polling(bot)
+
+    if recovered := recover_interrupted_runs(db):
+        logging.warning("%d pengecekan yang terputus ditandai gagal", recovered)
+    scheduler = create_scheduler(db, settings)
+    scheduler.start()
+    try:
+        await dp.start_polling(bot)
+    finally:
+        scheduler.shutdown(wait=False)
 
 
 def open_database(database_path: str) -> sqlite3.Connection:
