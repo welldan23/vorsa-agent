@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, Message
 
 from vorsa.handlers.common import PLACEHOLDER
 from vorsa.keyboards.monitor import MonitorAction
+from vorsa.keyboards.news import ArticleAction
 from vorsa.keyboards.panel import PanelAction, back_to_panel_keyboard
 from vorsa.menu import MENU_BY_COMMAND
 
@@ -20,5 +21,6 @@ async def command_placeholder(message: Message, command: CommandObject) -> None:
 
 @router.callback_query(PanelAction.filter())
 @router.callback_query(MonitorAction.filter())
+@router.callback_query(ArticleAction.filter())
 async def section_placeholder(query: CallbackQuery) -> None:
     await query.answer(PLACEHOLDER, show_alert=True)

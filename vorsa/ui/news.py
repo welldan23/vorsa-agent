@@ -15,7 +15,7 @@ class ArticleSummary:
     published_at: datetime
 
 
-def _score_badge(score: float) -> str:
+def score_badge(score: float) -> str:
     if score >= 0.85:
         return "🔥"
     if score >= 0.7:
@@ -32,7 +32,7 @@ def render_news_summary(articles: list[ArticleSummary], limit: int = 5) -> str:
     shown = sorted(articles, key=lambda a: a.published_at, reverse=True)[:limit]
     for i, a in enumerate(shown, start=1):
         lines += [
-            f"{i}. {_score_badge(a.relevance_score)} <a href=\"{escape(a.link)}\">{escape(a.title)}</a>",
+            f"{i}. {score_badge(a.relevance_score)} <a href=\"{escape(a.link)}\">{escape(a.title)}</a>",
             f"    {escape(a.category)} · {escape(a.source)} · {a.published_at:%H:%M}"
             f" · skor {a.relevance_score:.0%}",
             "",
