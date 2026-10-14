@@ -13,6 +13,8 @@ ACTION_LABELS = {
     "published": ("📤", "Terkirim ke Instagram"),
     "flagged": ("📌", "Ditandai untuk diolah"),
     "category_toggled": ("🗂", "Kategori diubah"),
+    "source_added": ("➕", "Sumber RSS ditambah"),
+    "source_deleted": ("🗑", "Sumber RSS dihapus"),
 }
 
 

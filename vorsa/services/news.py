@@ -10,7 +10,7 @@ from vorsa.ui.news import ArticleSummary
 _IMPORTANT = """
     FROM articles a
     JOIN categories c ON c.id = a.category_id
-    JOIN rss_sources s ON s.id = a.source_id
+    LEFT JOIN rss_sources s ON s.id = a.source_id  -- sumber bisa sudah dihapus
     WHERE a.is_important = 1 AND c.is_enabled = 1
 """
 
@@ -36,7 +36,7 @@ def get_important_articles(conn: sqlite3.Connection, limit: int = 50) -> list[Ar
         ArticleSummary(
             title=r["title"],
             category=r["category"],
-            source=source_name(r["source_url"]),
+            source=source_name(r["source_url"] or r["link"]),
             link=r["link"],
             relevance_score=r["relevance_score"] or 0.0,
             published_at=from_db(r["published_at"]),

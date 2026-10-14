@@ -49,7 +49,7 @@ def test_article_constraints(db):
         conn.execute(insert.replace("VALUES (1, 1,", "VALUES (99, 1,"), ("E", "https://x/e", "h5", 0.5))
 
 
-def test_deleting_source_removes_its_articles(db):
+def test_deleting_source_keeps_its_articles(db):
     conn = db
     conn.execute("INSERT INTO categories (id, name) VALUES (1, 'Teknologi & AI')")
     conn.execute("INSERT INTO rss_sources (id, category_id, url) VALUES (1, 1, 'https://x/rss')")
@@ -57,7 +57,7 @@ def test_deleting_source_removes_its_articles(db):
         "INSERT INTO articles (source_id, category_id, title, link, content_hash) VALUES (1, 1, 'A', 'l', 'h')"
     )
     conn.execute("DELETE FROM rss_sources WHERE id = 1")
-    assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 0
+    assert conn.execute("SELECT source_id FROM articles").fetchone()[0] is None
 
 
 def test_check_run_status_and_activity_defaults(conn):
@@ -95,3 +95,18 @@ def test_rejects_gap_in_numbering(tmp_path, monkeypatch):
     monkeypatch.setattr(migrate, "MIGRATIONS_DIR", tmp_path)
     with pytest.raises(RuntimeError):
         migrate.list_migrations()
+
+
+def test_articles_survive_rebuild_migration(conn, tmp_path, monkeypatch):
+    """Data berita yang sudah ada tidak hilang saat migrasi 004 membangun ulang tabel."""
+    real = migrate.list_migrations()
+    monkeypatch.setattr(migrate, "list_migrations", lambda: real[:3])
+    migrate.apply_migrations(conn)
+    conn.execute(
+        "INSERT INTO articles (source_id, category_id, title, link, content_hash, is_important)"
+        " VALUES (1, 1, 'Lama', 'https://x/lama', 'h', 1)"
+    )
+    monkeypatch.setattr(migrate, "list_migrations", lambda: real)
+    migrate.apply_migrations(conn)
+    row = conn.execute("SELECT title, source_id, is_important FROM articles").fetchone()
+    assert tuple(row) == ("Lama", 1, 1)
