@@ -1,10 +1,16 @@
-"""Handler Panel Utama: /start, /panel, menu perintah, dan tombol navigasinya."""
+"""Handler Panel Utama: /start, /panel, dan router tombol/perintah menu.
+
+Setiap section menu punya satu fungsi tampilan di SECTION_VIEWS. Tombol inline
+(PanelAction) dan perintah slash (MenuItem.command) sama-sama diarahkan ke sana.
+Section yang belum punya tampilan jatuh ke router fallback.
+"""
 
 import sqlite3
+from collections.abc import Callable
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from vorsa.config import Settings
 from vorsa.handlers.common import NO_PREVIEW, edit_view
@@ -15,14 +21,12 @@ from vorsa.keyboards.panel import (
     main_panel_keyboard,
     section_keyboard,
 )
-from vorsa.menu import PANEL_COMMAND
+from vorsa.menu import MENU_ITEMS, PANEL_COMMAND
+from vorsa.services.activity import get_recent_activity
+from vorsa.services.monitoring import get_monitoring_status
+from vorsa.services.news import get_important_articles
 from vorsa.services.panel import get_panel_snapshot
-from vorsa.stub.mock_data import (
-    get_important_articles,
-    get_monitor_overview,
-    get_monitoring_status,
-    get_recent_activity,
-)
+from vorsa.stub.mock_data import get_monitor_overview
 from vorsa.ui.activity import render_activity_list
 from vorsa.ui.help import render_help
 from vorsa.ui.monitor import render_monitor_overview
@@ -31,6 +35,24 @@ from vorsa.ui.panel import render_main_panel
 from vorsa.ui.status import render_monitoring_status
 
 router = Router(name="panel")
+
+View = tuple[str, InlineKeyboardMarkup]
+
+SECTION_VIEWS: dict[str, Callable[[sqlite3.Connection, Settings], View]] = {
+    "news": lambda db, s: (render_news_summary(get_important_articles(db)), section_keyboard("news")),
+    "status": lambda db, s: (
+        render_monitoring_status(get_monitoring_status(db, s.check_interval_minutes)),
+        section_keyboard("status"),
+    ),
+    "activity": lambda db, s: (render_activity_list(get_recent_activity(db)), section_keyboard("activity")),
+    "help": lambda db, s: (render_help(), back_to_panel_keyboard()),
+    # Data hub Pantau Berita masih tiruan sampai backend Pantau Berita jadi.
+    "monitor": lambda db, s: (render_monitor_overview(get_monitor_overview()), monitor_keyboard()),
+}
+
+# perintah slash → section, diambil dari daftar menu (+ alias /help)
+COMMAND_SECTIONS = {i.command: i.section for i in MENU_ITEMS if i.section in SECTION_VIEWS}
+COMMAND_SECTIONS["help"] = "help"
 
 
 def _panel_text(db: sqlite3.Connection, settings: Settings, user_name: str | None) -> str:
@@ -44,39 +66,12 @@ async def show_panel(message: Message, db: sqlite3.Connection, settings: Setting
     await message.answer(_panel_text(db, settings, name), reply_markup=main_panel_keyboard())
 
 
-@router.message(Command("bantuan", "help"))
-async def show_help(message: Message) -> None:
-    await message.answer(render_help(), reply_markup=back_to_panel_keyboard())
-
-
-@router.message(Command("berita"))
-async def show_news(message: Message) -> None:
-    await message.answer(
-        render_news_summary(get_important_articles()),
-        reply_markup=section_keyboard("news"),
-        link_preview_options=NO_PREVIEW,
-    )
-
-
-@router.message(Command("status"))
-async def show_status(message: Message) -> None:
-    await message.answer(
-        render_monitoring_status(get_monitoring_status()),
-        reply_markup=section_keyboard("status"),
-    )
-
-
-@router.message(Command("aktivitas"))
-async def show_activity(message: Message) -> None:
-    await message.answer(
-        render_activity_list(get_recent_activity()),
-        reply_markup=section_keyboard("activity"),
-    )
-
-
-@router.message(Command("pantau"))
-async def show_monitor(message: Message) -> None:
-    await message.answer(render_monitor_overview(get_monitor_overview()), reply_markup=monitor_keyboard())
+@router.message(Command(*COMMAND_SECTIONS))
+async def section_command(
+    message: Message, command: CommandObject, db: sqlite3.Connection, settings: Settings
+) -> None:
+    text, keyboard = SECTION_VIEWS[COMMAND_SECTIONS[command.command]](db, settings)
+    await message.answer(text, reply_markup=keyboard, link_preview_options=NO_PREVIEW)
 
 
 @router.callback_query(PanelAction.filter(F.section == "home"))
@@ -85,31 +80,9 @@ async def refresh_panel(query: CallbackQuery, db: sqlite3.Connection, settings: 
     await query.answer("Panel diperbarui")
 
 
-@router.callback_query(PanelAction.filter(F.section == "help"))
-async def help_from_panel(query: CallbackQuery) -> None:
-    await edit_view(query, render_help(), back_to_panel_keyboard())
-    await query.answer()
-
-
-@router.callback_query(PanelAction.filter(F.section == "news"))
-async def news_from_panel(query: CallbackQuery) -> None:
-    await edit_view(query, render_news_summary(get_important_articles()), section_keyboard("news"))
-    await query.answer()
-
-
-@router.callback_query(PanelAction.filter(F.section == "status"))
-async def status_from_panel(query: CallbackQuery) -> None:
-    await edit_view(query, render_monitoring_status(get_monitoring_status()), section_keyboard("status"))
-    await query.answer()
-
-
-@router.callback_query(PanelAction.filter(F.section == "activity"))
-async def activity_from_panel(query: CallbackQuery) -> None:
-    await edit_view(query, render_activity_list(get_recent_activity()), section_keyboard("activity"))
-    await query.answer()
-
-
-@router.callback_query(PanelAction.filter(F.section == "monitor"))
-async def monitor_from_panel(query: CallbackQuery) -> None:
-    await edit_view(query, render_monitor_overview(get_monitor_overview()), monitor_keyboard())
+@router.callback_query(PanelAction.filter(F.section.in_(SECTION_VIEWS)))
+async def section_button(
+    query: CallbackQuery, callback_data: PanelAction, db: sqlite3.Connection, settings: Settings
+) -> None:
+    await edit_view(query, *SECTION_VIEWS[callback_data.section](db, settings))
     await query.answer()
