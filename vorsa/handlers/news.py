@@ -7,8 +7,17 @@ from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from vorsa.handlers.common import edit_view
 from vorsa.handlers.design_progress import DesignProgress, run_demo_steps
 from vorsa.keyboards.news import ArticleAction, flag_confirm_keyboard, notification_keyboard, score_keyboard
-from vorsa.keyboards.design import DesignAction, design_keyboard, history_keyboard, preview_keyboard
+from vorsa.keyboards.design import (
+    REGEN_STYLES,
+    DesignAction,
+    RegenAction,
+    design_keyboard,
+    history_keyboard,
+    preview_keyboard,
+    regenerate_keyboard,
+)
 from vorsa.stub.samples import (
+    add_sample_version,
     sample_design,
     sample_design_by_id,
     sample_design_image,
@@ -17,7 +26,12 @@ from vorsa.stub.samples import (
     sample_score_detail,
     set_sample_flag,
 )
-from vorsa.ui.design import render_design_draft, render_preview_caption, render_version_history
+from vorsa.ui.design import (
+    render_design_draft,
+    render_preview_caption,
+    render_regenerate_prompt,
+    render_version_history,
+)
 from vorsa.ui.notification import render_flag_confirmation, render_notification
 from vorsa.ui.score import render_score_detail
 
@@ -68,10 +82,11 @@ async def start_design(query: CallbackQuery) -> None:
     await edit_view(query, render_design_draft(design), design_keyboard(design.id, design.article_id))
 
 
-SAMPLE_DESIGN_IDS = {d.id for d in sample_design_versions()}
+def _is_sample(callback_data: DesignAction | RegenAction) -> bool:
+    return sample_design_by_id(callback_data.id) is not None
 
 
-@router.callback_query(DesignAction.filter((F.action == "preview") & F.id.in_(SAMPLE_DESIGN_IDS)))
+@router.callback_query(DesignAction.filter(F.action == "preview"), lambda q, callback_data: _is_sample(callback_data))
 async def preview_design(query: CallbackQuery, callback_data: DesignAction) -> None:
     design = sample_design_by_id(callback_data.id)
     await query.answer()
@@ -83,9 +98,9 @@ async def preview_design(query: CallbackQuery, callback_data: DesignAction) -> N
     )
 
 
-@router.callback_query(DesignAction.filter((F.action == "open") & (F.id == 0)))
+@router.callback_query(DesignAction.filter(F.action == "open"), lambda q, callback_data: _is_sample(callback_data))
 async def open_design_chat(query: CallbackQuery) -> None:
-    design = sample_design()
+    design = sample_design_versions()[0]
     await query.answer()
     await query.bot.send_message(
         chat_id=query.message.chat.id,
@@ -94,8 +109,28 @@ async def open_design_chat(query: CallbackQuery) -> None:
     )
 
 
-@router.callback_query(DesignAction.filter((F.action == "history") & (F.id == 0)))
+@router.callback_query(DesignAction.filter(F.action == "history"), lambda q, callback_data: _is_sample(callback_data))
 async def design_history(query: CallbackQuery) -> None:
     versions = sample_design_versions()
-    await edit_view(query, render_version_history(versions), history_keyboard(versions, 0))
+    await edit_view(query, render_version_history(versions), history_keyboard(versions, versions[0].id))
     await query.answer()
+
+
+@router.callback_query(DesignAction.filter(F.action == "regenerate"), lambda q, callback_data: _is_sample(callback_data))
+async def ask_regenerate(query: CallbackQuery, callback_data: DesignAction) -> None:
+    latest = sample_design_versions()[0]
+    await query.answer()
+    await query.bot.send_message(
+        chat_id=query.message.chat.id,
+        text=render_regenerate_prompt(latest),
+        reply_markup=regenerate_keyboard(latest.id),
+    )
+
+
+@router.callback_query(RegenAction.filter(F.style.in_(REGEN_STYLES)), lambda q, callback_data: _is_sample(callback_data))
+async def regenerate(query: CallbackQuery, callback_data: RegenAction) -> None:
+    await query.answer(f"🔁 Bikin versi baru: {REGEN_STYLES[callback_data.style]}")
+    latest = sample_design_versions()[0]
+    await run_demo_steps(DesignProgress(query, latest.article_title))
+    design = add_sample_version(callback_data.style)
+    await edit_view(query, render_design_draft(design), design_keyboard(design.id, design.article_id))

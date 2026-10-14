@@ -38,3 +38,26 @@ def history_keyboard(versions: list[DesignDraft], back_design_id: int) -> Inline
     kb.button(text="⬅️ Kembali ke Desain", callback_data=DesignAction(action="open", id=back_design_id))
     kb.adjust(*([min(len(versions), 4)] if versions else []), 1)
     return kb.as_markup()
+
+
+# gaya versi baru → label tombol
+REGEN_STYLES = {
+    "variasi": "🎲 Variasi lain",
+    "singkat": "✂️ Judul lebih singkat",
+    "santai": "😄 Lebih santai",
+    "formal": "🎩 Lebih formal",
+}
+
+
+class RegenAction(CallbackData, prefix="rgn"):
+    id: int  # desain yang mau dibuatkan versi baru
+    style: str
+
+
+def regenerate_keyboard(design_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for style, label in REGEN_STYLES.items():
+        kb.button(text=label, callback_data=RegenAction(id=design_id, style=style))
+    kb.button(text="Batal", callback_data=DesignAction(action="open", id=design_id))
+    kb.adjust(2, 2, 1)
+    return kb.as_markup()

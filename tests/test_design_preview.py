@@ -47,3 +47,30 @@ def test_empty_history():
     from vorsa.ui.design import render_version_history
 
     assert "Belum ada desain" in render_version_history([])
+
+
+def test_regenerate_adds_new_version(tg):
+    from vorsa.stub.samples import reset_sample_versions
+
+    reset_sample_versions()
+    try:
+        asyncio.run(tg.press("dsg:regenerate:0"))
+        prompt = tg.calls[-1]
+        assert "🔁 Minta versi baru</b> (sekarang v3)" in prompt.text
+        assert [b.text for r in prompt.reply_markup.inline_keyboard for b in r] == [
+            "🎲 Variasi lain", "✂️ Judul lebih singkat", "😄 Lebih santai", "🎩 Lebih formal", "Batal",
+        ]
+
+        asyncio.run(tg.press("rgn:0:singkat"))
+        *steps, draft = [t for t in tg.texts() if "Minta versi" not in t]
+        assert len(steps) == 4
+        assert "versi 4" in draft and "EMAS CETAK REKOR!" in draft
+
+        asyncio.run(tg.press("dsg:history:200"))
+        history = tg.texts()[-1]
+        assert history.index("v4") < history.index("v3")
+
+        asyncio.run(tg.press("rgn:200:ngawur"))  # gaya tidak dikenal
+        assert tg.calls[-1].text == "Bagian ini sedang disiapkan 🙏"
+    finally:
+        reset_sample_versions()

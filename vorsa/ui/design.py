@@ -96,3 +96,11 @@ def render_version_history(versions: list[DesignDraft]) -> str:
         ]
     lines.append("<i>Tekan versi untuk melihat pratinjaunya.</i>")
     return "\n".join(lines)
+
+
+def render_regenerate_prompt(d: DesignDraft) -> str:
+    return (
+        f"<b>🔁 Minta versi baru</b> (sekarang v{d.version})\n\n"
+        f"Judul saat ini: “{escape(d.headline)}”\n\n"
+        "Mau versi berikutnya seperti apa? Versi lama tetap tersimpan di riwayat."
+    )

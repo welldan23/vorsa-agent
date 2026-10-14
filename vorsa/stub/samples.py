@@ -90,10 +90,38 @@ def sample_design_image(headline: str) -> bytes:
     return buf.getvalue()
 
 
+_new_versions: list[DesignDraft] = []  # versi yang dibuat lewat "Buat Ulang", terbaru dulu
+
+# gaya versi baru → judul contoh
+REGEN_HEADLINES = {
+    "variasi": "EMAS LAGI DI PUNCAK. KAMU TIM BELI ATAU NUNGGU?",
+    "singkat": "EMAS CETAK REKOR!",
+    "santai": "EMAS NAIK LAGI, DOMPET AMAN GAK NIH?",
+    "formal": "HARGA EMAS DUNIA CAPAI REKOR TERTINGGI",
+}
+
+
+def reset_sample_versions() -> None:
+    _new_versions.clear()
+
+
+def add_sample_version(style: str) -> DesignDraft:
+    latest = sample_design_versions()[0]
+    design = replace(
+        latest,
+        id=200 + len(_new_versions),
+        version=latest.version + 1,
+        headline=REGEN_HEADLINES[style],
+        created_at=datetime.now(),
+    )
+    _new_versions.insert(0, design)
+    return design
+
+
 def sample_design_versions() -> list[DesignDraft]:
-    """Riwayat versi desain contoh, terbaru dulu. Versi terbaru = sample_design()."""
+    """Riwayat versi desain contoh, terbaru dulu."""
     latest = replace(sample_design(), version=3)
-    return [
+    return _new_versions + [
         latest,
         replace(
             latest,

@@ -5,7 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import CallbackQuery, Message
 
 from vorsa.handlers.common import PLACEHOLDER
-from vorsa.keyboards.design import DesignAction
+from vorsa.keyboards.design import DesignAction, RegenAction
 from vorsa.keyboards.monitor import MonitorAction
 from vorsa.keyboards.news import ArticleAction
 from vorsa.keyboards.panel import PanelAction, back_to_panel_keyboard
@@ -24,5 +24,6 @@ async def command_placeholder(message: Message, command: CommandObject) -> None:
 @router.callback_query(MonitorAction.filter())
 @router.callback_query(ArticleAction.filter())
 @router.callback_query(DesignAction.filter())
+@router.callback_query(RegenAction.filter())
 async def section_placeholder(query: CallbackQuery) -> None:
     await query.answer(PLACEHOLDER, show_alert=True)
