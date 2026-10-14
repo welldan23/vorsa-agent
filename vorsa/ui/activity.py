@@ -12,6 +12,7 @@ ACTION_LABELS = {
     "rejected": ("❌", "Ditolak"),
     "published": ("📤", "Terkirim ke Instagram"),
     "flagged": ("📌", "Ditandai untuk diolah"),
+    "category_toggled": ("🗂", "Kategori diubah"),
 }
 
 
