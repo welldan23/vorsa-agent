@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 from vorsa.ui.notification import ArticleNotification
+from vorsa.ui.score import ScoreDetail
 
 
 def sample_notification() -> ArticleNotification:
@@ -19,4 +20,17 @@ def sample_notification() -> ArticleNotification:
         relevance_score=0.91,
         reason="Berdampak langsung ke keuangan pembaca dan sedang ramai dibahas.",
         published_at=datetime.now() - timedelta(minutes=12),
+    )
+
+
+def sample_score_detail() -> ScoreDetail:
+    n = sample_notification()
+    return ScoreDetail(
+        article_id=n.id,
+        title=n.title,
+        category=n.category,
+        score=n.relevance_score,
+        threshold=0.70,
+        criteria={"impact": 0.95, "novelty": 0.85, "audience_fit": 0.9, "virality": 0.88},
+        reason=n.reason,
     )

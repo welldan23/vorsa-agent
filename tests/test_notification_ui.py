@@ -22,7 +22,8 @@ def test_keyboard_switches_when_flagged():
     n = sample_notification()
     rows = notification_keyboard(n).inline_keyboard
     assert [b.text for b in rows[0]] == ["📌 Tandai untuk Diolah", "🔗 Baca"]
-    assert rows[0][1].url == n.link and rows[1][0].text == "🙈 Abaikan"
+    assert rows[0][1].url == n.link
+    assert [b.text for b in rows[1]] == ["📊 Detail Skor", "🙈 Abaikan"]
 
     flagged = replace(n, is_flagged=True)
     assert notification_keyboard(flagged).inline_keyboard[0][0].text == "↩️ Batal Tandai"
