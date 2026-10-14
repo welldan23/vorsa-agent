@@ -18,13 +18,13 @@ def tables(conn):
 
 
 def test_creates_panel_tables(conn):
-    assert migrate.apply_migrations(conn) == 1
+    assert migrate.apply_migrations(conn) == len(migrate.list_migrations())
     assert {"users", "categories", "rss_sources", "articles", "check_runs", "activity_logs"} <= tables(conn)
 
 
 def test_is_idempotent(conn):
-    migrate.apply_migrations(conn)
-    assert migrate.apply_migrations(conn) == 1
+    version = migrate.apply_migrations(conn)
+    assert migrate.apply_migrations(conn) == version
 
 
 def test_article_constraints(conn):
