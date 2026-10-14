@@ -13,6 +13,10 @@ log = logging.getLogger(__name__)
 _lock = asyncio.Lock()
 
 
+def is_check_running() -> bool:
+    return _lock.locked()
+
+
 def recover_interrupted_runs(conn: sqlite3.Connection) -> int:
     """Tandai putaran yang tertinggal 'running' (bot mati di tengah jalan) sebagai gagal."""
     with conn:
@@ -40,7 +44,7 @@ def _active_sources(conn: sqlite3.Connection) -> list[sqlite3.Row]:
 
 async def run_check(conn: sqlite3.Connection) -> int | None:
     """Jalankan satu putaran. Mengembalikan id check_runs, atau None kalau putaran lain masih jalan."""
-    if _lock.locked():
+    if is_check_running():
         log.info("Pengecekan dilewati: putaran sebelumnya masih berjalan")
         return None
 

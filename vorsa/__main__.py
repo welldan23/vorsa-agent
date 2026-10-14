@@ -1,7 +1,7 @@
 """Titik masuk.
 
     python -m vorsa            jalankan bot
-    python -m vorsa --preview  cetak Panel Utama di terminal (tanpa token)
+    python -m vorsa --preview  cetak Panel Utama dari database di terminal (tanpa token)
     python -m vorsa --migrate  siapkan/perbarui database saja
 """
 
@@ -14,13 +14,13 @@ import sys
 from vorsa.config import Settings, load_settings
 
 
-def preview() -> None:
+def preview(settings: Settings, db: sqlite3.Connection) -> None:
     from vorsa.keyboards.panel import main_panel_keyboard
-    from vorsa.stub.mock_data import get_panel_snapshot
+    from vorsa.services.panel import get_panel_snapshot
     from vorsa.ui.panel import render_main_panel
 
-    text = render_main_panel(get_panel_snapshot(), "Pemilik")
-    print(re.sub(r"</?[bi]>", "", text))
+    text = render_main_panel(get_panel_snapshot(db, settings.check_interval_minutes), "Pemilik")
+    print(re.sub(r"</?[bi]>", "", text).replace("&amp;", "&"))
     print()
     for row in main_panel_keyboard().inline_keyboard:
         print("  ".join(f"[ {btn.text} ]" for btn in row))
@@ -56,10 +56,6 @@ def open_database(database_path: str) -> sqlite3.Connection:
 
 
 def main() -> None:
-    if "--preview" in sys.argv:
-        preview()
-        return
-
     logging.basicConfig(level=logging.INFO)
     settings = load_settings()
     db = open_database(settings.database_path)
@@ -70,6 +66,9 @@ def main() -> None:
         if not settings.owner_telegram_ids:
             logging.warning("OWNER_TELEGRAM_IDS kosong — semua orang akan ditolak. Kirim /start untuk tahu ID-mu.")
         if "--migrate" in sys.argv:
+            return
+        if "--preview" in sys.argv:
+            preview(settings, db)
             return
         if not settings.bot_token:
             sys.exit("BOT_TOKEN belum diisi. Salin .env.example jadi .env lalu isi token dari @BotFather.")

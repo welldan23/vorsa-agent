@@ -17,7 +17,7 @@ class SourceFailure:
 @dataclass(frozen=True)
 class CheckRun:
     started_at: datetime
-    finished_at: datetime
+    finished_at: datetime | None  # None = masih berjalan
     next_check_at: datetime | None
     interval_minutes: int
     sources_checked: int
@@ -26,12 +26,24 @@ class CheckRun:
     duplicates_skipped: int
     passed_filter: int
     new_per_category: dict[str, int]
+    error: str | None = None  # alasan kalau putaran gagal total
+
+
+def render_check_in_progress(source_count: int) -> str:
+    return f"<b>🧾 Pengecekan Terakhir</b>\n\n⏳ Sedang mengecek {source_count} sumber… tunggu sebentar ya."
 
 
 def render_check_run(run: CheckRun | None) -> str:
     lines = ["<b>🧾 Pengecekan Terakhir</b>", ""]
     if run is None:
         lines.append("Belum ada pengecekan. Pengecekan pertama jalan otomatis setelah bot menyala.")
+        return "\n".join(lines)
+
+    if run.finished_at is None:
+        lines.append(f"Mulai {run.started_at:%H:%M} · ⏳ sedang berjalan…")
+        return "\n".join(lines)
+    if run.error:
+        lines += [f"Mulai {run.started_at:%H:%M} · ❌ gagal total", f"<i>{escape(run.error)}</i>"]
         return "\n".join(lines)
 
     seconds = round((run.finished_at - run.started_at).total_seconds())

@@ -26,14 +26,14 @@ dan diperbarui otomatis saat bot menyala; bisa juga manual dengan `.venv/bin/pyt
 .venv/bin/python -m pytest
 ```
 
-Mau lihat tampilan Panel Utama tanpa token? Jalankan:
+Mau lihat Panel Utama (dari database) tanpa token? Jalankan:
 
 ```bash
 .venv/bin/python -m vorsa --preview
 ```
 
-> Saat ini semua tampilan masih memakai data tiruan di memori (`vorsa/stub/mock_data.py`).
-> Perubahan (toggle kategori, tambah/hapus sumber RSS) hilang saat bot di-restart.
+Begitu menyala, bot langsung mengecek semua sumber RSS lalu mengulanginya tiap
+`CHECK_INTERVAL_MINUTES` menit (bawaan 15). Berita disimpan di SQLite, berita kembar dibuang.
 
 ## Perintah
 
@@ -56,5 +56,7 @@ Mau lihat tampilan Panel Utama tanpa token? Jalankan:
 | `vorsa/handlers/` | Handler perintah & tombol (aiogram Router; `fallback.py` selalu terakhir) |
 | `vorsa/keyboards/` | Tombol inline |
 | `vorsa/ui/` | Teks/tampilan pesan |
-| `vorsa/stub/` | Data tiruan sebelum backend jadi |
+| `vorsa/services/` | Logika & akses data (berita, pemantauan, fetcher RSS, dedup, dll.) |
+| `vorsa/middlewares/` | Satpam akses: hanya pemilik terdaftar |
+| `vorsa/scheduler.py` | Jadwal cek RSS otomatis (APScheduler) |
 | `vorsa/db/` | Koneksi SQLite & migrasi skema (`migrations/NNN_nama.sql`) |

@@ -1,4 +1,4 @@
-"""Handler hub Pantau Berita: kategori dan laporan pengecekan terakhir."""
+"""Handler hub Pantau Berita: kategori, laporan pengecekan terakhir, dan cek manual."""
 
 import sqlite3
 
@@ -6,6 +6,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
+from vorsa.config import Settings
 from vorsa.handlers.common import edit_view
 from vorsa.keyboards.monitor import (
     CategoryToggle,
@@ -14,9 +15,10 @@ from vorsa.keyboards.monitor import (
     last_check_keyboard,
 )
 from vorsa.services.categories import get_categories, toggle_category
-from vorsa.stub.mock_data import get_last_check_run
+from vorsa.services.check_report import count_sources_to_check, get_last_check_report
+from vorsa.services.check_run import is_check_running, run_check
 from vorsa.ui.categories import render_category_list
-from vorsa.ui.check_run import render_check_run
+from vorsa.ui.check_run import render_check_in_progress, render_check_run
 
 router = Router(name="monitor")
 
@@ -47,7 +49,22 @@ async def toggle(
     await query.answer(f"{changed.name} {'dinyalakan ✅' if changed.enabled else 'dimatikan ⏸'}")
 
 
+def _report(db: sqlite3.Connection, settings: Settings) -> str:
+    return render_check_run(get_last_check_report(db, settings.check_interval_minutes))
+
+
 @router.callback_query(MonitorAction.filter(F.action == "last_check"))
-async def last_check(query: CallbackQuery) -> None:
-    await edit_view(query, render_check_run(get_last_check_run()), last_check_keyboard())
+async def last_check(query: CallbackQuery, db: sqlite3.Connection, settings: Settings) -> None:
+    await edit_view(query, _report(db, settings), last_check_keyboard())
     await query.answer()
+
+
+@router.callback_query(MonitorAction.filter(F.action == "check_now"))
+async def check_now(query: CallbackQuery, db: sqlite3.Connection, settings: Settings) -> None:
+    if is_check_running():
+        await query.answer("Pengecekan lain sedang berjalan — tunggu sebentar lalu buka 🧾 Cek Terakhir.", show_alert=True)
+        return
+    await query.answer("⏱ Mulai mengecek…")
+    await edit_view(query, render_check_in_progress(count_sources_to_check(db)), None)
+    await run_check(db)
+    await edit_view(query, _report(db, settings), last_check_keyboard())

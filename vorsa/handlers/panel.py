@@ -23,10 +23,10 @@ from vorsa.keyboards.panel import (
 )
 from vorsa.menu import MENU_ITEMS, PANEL_COMMAND
 from vorsa.services.activity import get_recent_activity
+from vorsa.services.check_report import get_monitor_overview
 from vorsa.services.monitoring import get_monitoring_status
 from vorsa.services.news import get_important_articles
 from vorsa.services.panel import get_panel_snapshot
-from vorsa.stub.mock_data import get_monitor_overview
 from vorsa.ui.activity import render_activity_list
 from vorsa.ui.help import render_help
 from vorsa.ui.monitor import render_monitor_overview
@@ -46,8 +46,10 @@ SECTION_VIEWS: dict[str, Callable[[sqlite3.Connection, Settings], View]] = {
     ),
     "activity": lambda db, s: (render_activity_list(get_recent_activity(db)), section_keyboard("activity")),
     "help": lambda db, s: (render_help(), back_to_panel_keyboard()),
-    # Data hub Pantau Berita masih tiruan sampai backend Pantau Berita jadi.
-    "monitor": lambda db, s: (render_monitor_overview(get_monitor_overview()), monitor_keyboard()),
+    "monitor": lambda db, s: (
+        render_monitor_overview(get_monitor_overview(db, s.check_interval_minutes)),
+        monitor_keyboard(),
+    ),
 }
 
 # perintah slash → section, diambil dari daftar menu (+ alias /help)
