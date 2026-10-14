@@ -15,6 +15,7 @@ ACTION_LABELS = {
     "category_toggled": ("🗂", "Kategori diubah"),
     "source_added": ("➕", "Sumber RSS ditambah"),
     "source_deleted": ("🗑", "Sumber RSS dihapus"),
+    "filter_changed": ("🎚", "Penyaringan diubah"),
 }
 
 

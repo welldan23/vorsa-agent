@@ -19,6 +19,7 @@ MENU_ITEMS: list[MenuItem] = [
     MenuItem("monitor", "🛰 Pantau Berita", "pantau", "Panel pemantauan RSS otomatis"),
     MenuItem("categories", "🗂 Kategori", "kategori", "Aktif/nonaktifkan kategori berita", in_panel=False),
     MenuItem("sources", "🔗 Sumber RSS", "sumber", "Tambah atau hapus sumber RSS", in_panel=False),
+    MenuItem("filter", "🎚 Penyaringan", "saring", "Atur seberapa ketat berita disaring"),
     MenuItem("settings", "⚙️ Pengaturan", "pengaturan", "Pengaturan bot"),
     MenuItem("help", "❓ Bantuan", "bantuan", "Daftar perintah VORSA"),
 ]
