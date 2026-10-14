@@ -10,9 +10,10 @@ from vorsa.db.migrate import apply_migrations
 
 @pytest.fixture
 def db():
-    """Database kosong di memori dengan skema terbaru."""
+    """Database di memori dengan skema terbaru, tanpa isi awal (kategori/sumber bawaan dihapus)."""
     conn = connect(":memory:")
     apply_migrations(conn)
+    conn.execute("DELETE FROM categories")  # ikut menghapus rss_sources (ON DELETE CASCADE)
     yield conn
     conn.close()
 

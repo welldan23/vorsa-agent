@@ -27,8 +27,8 @@ def test_is_idempotent(conn):
     assert migrate.apply_migrations(conn) == version
 
 
-def test_article_constraints(conn):
-    migrate.apply_migrations(conn)
+def test_article_constraints(db):
+    conn = db
     conn.execute("INSERT INTO categories (id, name) VALUES (1, 'Teknologi & AI')")
     conn.execute("INSERT INTO rss_sources (id, category_id, url) VALUES (1, 1, 'https://x/rss')")
     insert = (
@@ -49,8 +49,8 @@ def test_article_constraints(conn):
         conn.execute(insert.replace("VALUES (1, 1,", "VALUES (99, 1,"), ("E", "https://x/e", "h5", 0.5))
 
 
-def test_deleting_source_removes_its_articles(conn):
-    migrate.apply_migrations(conn)
+def test_deleting_source_removes_its_articles(db):
+    conn = db
     conn.execute("INSERT INTO categories (id, name) VALUES (1, 'Teknologi & AI')")
     conn.execute("INSERT INTO rss_sources (id, category_id, url) VALUES (1, 1, 'https://x/rss')")
     conn.execute(
